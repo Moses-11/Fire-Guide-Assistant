@@ -1,107 +1,89 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fire Guide Assistant</title>
-<style>
-:root{--bg:#fff;--surface:#f6f3f1;--text:#1d1b1a;--muted:#5f5a57;--accent:#c2410c;--on-accent:#fff;--border:#d9d2cd;--user:#c2410c;--warn:#fdf0e8;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161312;--surface:#231f1d;--text:#f3eeeb;--muted:#b3aaa5;--accent:#f2793f;--on-accent:#1b0e06;--border:#3a3330;--user:#f2793f;--warn:#2b1d15}}
-:root[data-theme="dark"]{--bg:#161312;--surface:#231f1d;--text:#f3eeeb;--muted:#b3aaa5;--accent:#f2793f;--on-accent:#1b0e06;--border:#3a3330;--user:#f2793f;--warn:#2b1d15}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5}
-.app{height:100%;max-width:720px;margin:0 auto;display:flex;flex-direction:column;padding:0 12px}
-header{padding:14px 4px 8px}
-h1{margin:0;font-size:20px}
-h1 span{color:var(--accent)}
-.sub{margin:2px 0 0;color:var(--muted);font-size:14px}
-.warn{background:var(--warn);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13px;margin:6px 0}
-#log{flex:1;overflow-y:auto;padding:8px 2px;display:flex;flex-direction:column;gap:10px}
-.msg{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;word-wrap:break-word}
-.bot{background:var(--surface);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
-.me{background:var(--user);color:var(--on-accent);align-self:flex-end;border-bottom-right-radius:4px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0}
-.chip{border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer;min-height:44px}
-form{display:flex;gap:8px;padding:8px 0 12px}
-textarea{flex:1;resize:none;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:14px;padding:10px 12px;font:inherit;min-height:44px;max-height:120px}
-textarea:focus-visible,.chip:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-#send{border:0;background:var(--accent);color:var(--on-accent);border-radius:14px;padding:0 18px;font:inherit;font-weight:600;cursor:pointer;min-height:44px}
-#send:disabled{opacity:.5;cursor:default}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10233d">
+  <meta name="description" content="Fire Guide AI — a fire safety learning and emergency guidance assistant.">
+  <title>Fire Guide AI | Safety Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Marked converts Markdown to HTML; DOMPurify sanitizes the generated HTML. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
-<div class="app">
-<header>
-<h1>Fire Guide <span>Assistant</span></h1>
-<p class="sub">Ask a fire safety question. Answers come only from the Fire Guide notes.</p>
-<div class="warn" role="note">General guidance only. In a real emergency, get out and call your local emergency number.</div>
-</header>
-<div id="log" aria-live="polite"></div>
-<div class="chips" id="chips"></div>
-<form id="f">
-<textarea id="q" rows="1" placeholder="Ask about fire safety…" aria-label="Your question"></textarea>
-<button id="send" type="submit">Ask</button>
-</form>
-</div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" aria-label="Fire Guide home">
+        <span class="brand-mark">✦</span>
+        <span><strong>FIRE GUIDE</strong><small>LEARN · PREPARE · STAY SAFE</small></span>
+      </a>
 
-<script>
-const NOTES = [
-{t:"Smoke alarms",x:"Install smoke alarms on every level and outside sleeping areas. Test them monthly. Replace batteries when needed and replace the whole alarm about every 10 years."},
-{t:"Escape plan",x:"Make a plan with two ways out of every room. Pick one outside meeting place. Practice the plan with everyone at least twice a year, including at night."},
-{t:"Getting out",x:"If the alarm sounds, leave right away and do not stop for belongings. Stay low under smoke, where the air is cleaner. Never use an elevator. Once outside, stay out."},
-{t:"Closed doors",x:"Before opening a door, feel it with the back of your hand. If it is hot, do not open it. Use another exit. Closing doors behind you slows the spread of fire and smoke."},
-{t:"Stuck inside",x:"If you cannot get out, close the door, seal gaps with wet cloth if you can, go to a window and signal for help, and call the emergency number to say exactly where you are."},
-{t:"Clothes on fire",x:"Stop, drop and roll. Stop moving, drop to the ground, cover your face with your hands and roll over and over until the flames are out. Cool the burn with cool running water."},
-{t:"Kitchen and grease fires",x:"Never leave cooking unattended. For a grease fire, slide a lid over the pan and turn off the heat. Never throw water on a grease fire. Keep towels and packaging away from the stove."},
-{t:"Electrical safety",x:"Do not overload sockets. Replace damaged cords. For an electrical fire, switch off the power if it is safe, and never use water on it."},
-{t:"Fire extinguishers",x:"Only fight a small fire, with your back to an exit. Use the PASS steps: Pull the pin, Aim at the base, Squeeze the handle, Sweep side to side. If the fire grows, leave."},
-{t:"After a fire",x:"Do not go back inside until firefighters say it is safe. Get medical care for burns or smoke inhalation. Contact family so they know you are safe."}
-];
-const SUGGESTED=["What do I do if my clothes catch fire?","How often should I test smoke alarms?","Can I use water on a grease fire?","The door is hot and I\u2019m trapped. What now?"];
-const log=document.getElementById('log'),q=document.getElementById('q'),send=document.getElementById('send'),chips=document.getElementById('chips');
-let history=[],busy=false,sample=null;
+      <button class="new-chat" id="newChatBtn"><span>＋</span> New conversation</button>
 
-function add(cls,text){const d=document.createElement('div');d.className='msg '+cls;d.textContent=text;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
-add('bot','Hi! I\u2019m the Fire Guide assistant. Ask me about smoke alarms, escape plans, kitchen fires and more.');
-SUGGESTED.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=s;b.onclick=()=>ask(s);chips.appendChild(b)});
+      <div class="side-label">YOUR ASSISTANT</div>
+      <div class="assistant-card">
+        <div class="assistant-avatar">🔥</div>
+        <div><strong>Fire Guide AI</strong><small><span class="status-dot"></span> Safety assistant</small></div>
+      </div>
 
-(async()=>{try{sample=await claude.use('sample')}catch(e){sample=null}
- if(!sample){add('bot','The assistant isn\u2019t available in this view. Open the page in Claude to use it.');send.disabled=true}})();
+      <div class="side-label">QUICK TOPICS</div>
+      <nav class="topic-nav" aria-label="Quick topics">
+        <button data-prompt="How can I prevent a fire at home?"><span>⌂</span> Home fire safety</button>
+        <button data-prompt="Explain how to use a fire extinguisher with the PASS method."><span>▤</span> Fire extinguishers</button>
+        <button data-prompt="What should I do during an emergency evacuation?"><span>⇧</span> Emergency evacuation</button>
+        <button data-prompt="What is the correct first aid for a minor burn?"><span>＋</span> First aid for burns</button>
+        <button data-prompt="What should I do if an electrical appliance catches fire?"><span>ϟ</span> Electrical fires</button>
+      </nav>
 
-function prompt(question){
- const notes=NOTES.map(n=>'['+n.t+'] '+n.x).join('\n');
- const hist=history.slice(-6).map(h=>(h.r==='u'?'Learner: ':'Assistant: ')+h.c).join('\n');
- return 'You are the Fire Guide assistant for a fire safety learning app used by students.\n'+
- 'Answer ONLY using the NOTES below. Do not add facts that are not in the notes.\n'+
- 'If the notes do not cover the question, say so in one sentence and tell the person to ask a teacher, a fire service or their local emergency number. Do not guess.\n'+
- 'Keep answers under 120 words, in plain language, with short steps when useful.\n'+
- 'If the person describes an emergency happening right now, start with: Get to safety and call your local emergency number.\n'+
- 'End with one line: "Based on: <note titles used>" or "Not covered in my notes."\n\n'+
- 'NOTES:\n'+notes+'\n\nCONVERSATION SO FAR:\n'+(hist||'(none)')+'\n\nLearner: '+question+'\nAssistant:';
-}
+      <div class="sidebar-bottom">
+        <div class="safety-note"><span>ⓘ</span><p><strong>Safety comes first</strong><br>In an emergency, move to safety and contact local emergency services. Do not delay to chat.</p></div>
+        <div class="sidebar-foot">FIRE GUIDE PROJECT <span>•</span> AI ASSISTANT</div>
+      </div>
+    </aside>
 
-async function ask(question){
- question=question.trim();
- if(!question||busy||!sample)return;
- busy=true;send.disabled=true;chips.style.display='none';q.value='';
- add('me',question);
- const out=add('bot','Thinking\u2026');
- try{
-  const res=await sample(prompt(question),{cache:false,onText:({text})=>{out.textContent=text;log.scrollTop=log.scrollHeight}});
-  out.textContent=res.text;
-  history.push({r:'u',c:question},{r:'a',c:res.text});
- }catch(e){
-  const code=e&&e.code;
-  out.textContent=code==='not_granted'?'Permission was declined, so I can\u2019t answer. Reload the page to try again.':
-   code==='rate_limited'?'Too many questions at once. Please wait a moment and try again.':
-   'Something went wrong. Please try again.';
- }
- busy=false;send.disabled=!sample;q.focus();
-}
-document.getElementById('f').addEventListener('submit',e=>{e.preventDefault();ask(q.value)});
-q.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask(q.value)}});
-</script>
+    <main class="main-panel">
+      <header class="topbar">
+        <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Open menu">☰</button>
+        <div class="breadcrumb">Fire Guide <span>/</span> <strong>AI Assistant</strong></div>
+        <div class="top-actions">
+          <span class="secure-label"><span class="status-dot"></span> Ready to help</span>
+          <button class="icon-btn" id="clearBtn" title="Clear conversation" aria-label="Clear conversation">⌫</button>
+        </div>
+      </header>
+
+      <section class="chat-area" aria-label="Chat conversation">
+        <div class="welcome" id="welcome">
+          <div class="welcome-symbol">🔥</div>
+          <div class="eyebrow">YOUR FIRE SAFETY COMPANION</div>
+          <h1>Preparedness starts<br><span>with the right knowledge.</span></h1>
+          <p>Ask me about fire prevention, emergency procedures, firefighting equipment and basic first aid.</p>
+          <div class="suggestion-grid">
+            <button class="suggestion" data-prompt="What are the most important ways to prevent fires at home?"><span class="suggestion-icon orange">⌂</span><span><strong>Prevent home fires</strong><small>Practical everyday precautions</small></span><span class="arrow">↗</span></button>
+            <button class="suggestion" data-prompt="Teach me the PASS method for using a fire extinguisher."><span class="suggestion-icon blue">▤</span><span><strong>Use an extinguisher</strong><small>Learn the PASS technique</small></span><span class="arrow">↗</span></button>
+            <button class="suggestion" data-prompt="Give me a simple emergency evacuation plan for a school."><span class="suggestion-icon green">⇧</span><span><strong>Plan an evacuation</strong><small>Know your safe exit route</small></span><span class="arrow">↗</span></button>
+            <button class="suggestion" data-prompt="What should I do immediately after getting a burn?"><span class="suggestion-icon red">＋</span><span><strong>Learn burn first aid</strong><small>Understand immediate care</small></span><span class="arrow">↗</span></button>
+          </div>
+        </div>
+        <div class="messages" id="messages" aria-live="polite"></div>
+      </section>
+
+      <footer class="composer-wrap">
+        <form class="composer" id="chatForm">
+          <textarea id="messageInput" rows="1" placeholder="Ask anything about fire safety..." aria-label="Your message"></textarea>
+          <div class="composer-bottom">
+            <span class="composer-hint"><span>✦</span> Markdown-supported answers</span>
+            <button class="send-btn" id="sendBtn" type="submit" aria-label="Send message">Send <span>↑</span></button>
+          </div>
+        </form>
+        <p class="disclaimer">Fire Guide AI provides educational information, not emergency dispatch or professional medical advice.</p>
+      </footer>
+    </main>
+  </div>
+  <div class="mobile-backdrop" id="backdrop"></div>
 </body>
 </html>
